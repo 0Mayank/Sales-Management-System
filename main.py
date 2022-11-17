@@ -300,7 +300,7 @@ def orderHistory():
     else:
         orderHistory()
 
-admin = Menu(options=[("Add supplier", addNewSupplier), ("Delete product", listSuppliers, {"hook": deleteSupplier}), ("Edit supplier", listSuppliers, {"hook": editSupplier}), ("Add product", addNewProduct), ("Delete product", listProducts, {"hook": deleteProduct}), ("Edit product", listProducts, {"hook": editProduct}), (f"Sales \t\tToday: ₹{today_sales()}\tTotal: ₹{total_sales()}", total_sales), ("Logout", Menu.CLOSE)], title="Admin Page")
+admin = Menu(options=[("Add supplier", addNewSupplier), ("Delete supplier", listSuppliers, {"hook": deleteSupplier}), ("Edit supplier", listSuppliers, {"hook": editSupplier}), ("Add product", addNewProduct), ("Delete product", listProducts, {"hook": deleteProduct}), ("Edit product", listProducts, {"hook": editProduct}), (f"Sales \t\tToday: ₹{today_sales()}\tTotal: ₹{total_sales()}", total_sales), ("Logout", Menu.CLOSE)], title="Admin Page")
 user = Menu(options=[("Browse products", listProducts, {"hook": addProductCart}), ("Veiw Cart", veiwCart), ("Order History", orderHistory), ("Logout", Menu.CLOSE)], title="Welcome!")
 
 def adminAuth():
