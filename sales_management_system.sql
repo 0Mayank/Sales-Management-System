@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 17, 2022 at 04:03 PM
+-- Generation Time: Nov 17, 2022 at 04:57 PM
 -- Server version: 10.4.25-MariaDB
 -- PHP Version: 8.1.10
 
@@ -161,9 +161,9 @@ CREATE TABLE `supplier` (
 INSERT INTO `supplier` (`Id`, `SupplierName`, `ContactName`, `ContactTitle`, `City`, `Country`, `Phone`, `EmailId`) VALUES
 (1, 'Exotic Liquids', 'Charlotte Cooper', NULL, 'London', 'UK', '(171) 555-2222', NULL),
 (2, 'New Orleans Cajun Delights', 'Shelley Burke', NULL, 'New Orleans', 'USA', '(100) 555-4822', NULL),
-(3, "Grandma Kelly's Homestead", 'Regina Murphy', NULL, 'Ann Arbor', 'USA', '(313) 555-5735', '(313) 555-3349'),
+(3, 'Grandma Kelly\'s Homestead', 'Regina Murphy', NULL, 'Ann Arbor', 'USA', '(313) 555-5735', '(313) 555-3349'),
 (4, 'Tokyo Traders', 'Yoshi Nagase', NULL, 'Tokyo', 'Japan', '(03) 3555-5011', NULL),
-(5, "Cooperativa de Quesos \'Las Cabras\'", 'Antonio del Valle Saavedra', NULL, 'Oviedo', 'Spain', '(98) 598 76 54', NULL);
+(5, 'Cooperativa de Quesos \'Las Cabras\'', 'Antonio del Valle Saavedra', NULL, 'Oviedo', 'Spain', '(98) 598 76 54', NULL);
 
 --
 -- Indexes for dumped tables
@@ -219,7 +219,12 @@ ALTER TABLE `orderitem`
   ADD CONSTRAINT `orderitem_ibfk_1` FOREIGN KEY (`ProductId`) REFERENCES `product` (`Id`) ON DELETE CASCADE,
   ADD CONSTRAINT `orderitem_ibfk_2` FOREIGN KEY (`OrderId`) REFERENCES `orders` (`Id`) ON DELETE CASCADE,
   ADD CONSTRAINT `orderitem_ibfk_3` FOREIGN KEY (`ProductId`) REFERENCES `product` (`Id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `orderitem_ibfk_4` FOREIGN KEY (`OrderId`) REFERENCES `orders` (`Id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `orders`
+--
+ALTER TABLE `orders`
+  ADD CONSTRAINT `orders_ibfk_1` FOREIGN KEY (`CustomerId`) REFERENCES `customer` (`Id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `product`
