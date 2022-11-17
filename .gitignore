@@ -1,4 +1,4 @@
 dbmsenv/
 .vscode/
-*.sql
+FD/
 *.docx

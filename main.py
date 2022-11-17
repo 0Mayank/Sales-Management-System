@@ -10,7 +10,7 @@ con = mysql.connector.connect(host="localhost", user="root",password="", databas
 cursor = con.cursor()
 
 # ID of user
-sessionID = 0
+sessionID = 1
 
 #2D list of [product_id, product_name, product_quantity, unit_price]
 sessionCart = []
@@ -46,16 +46,32 @@ def addNewProduct():
     cursor.execute(query)
     con.commit()
 
-def sales():
+def today_sales():
+    query = f'''
+    SELECT SUM(TotalAmount) FROM orders
+    WHERE OrderDate = '{str(datetime.datetime.today()).split(" ")[0]}'
+    '''
+
+    cursor.execute(query)
+    try:    
+        sales = float(cursor.fetchall()[0][0])
+    except:
+        return 0
+
+    return sales
+
+def total_sales():
     query = '''
     SELECT SUM(TotalAmount) FROM orders
     '''
 
     cursor.execute(query)
-    total_sales = float(cursor.fetchall()[0][0])
+    try:
+        total_sales = float(cursor.fetchall()[0][0])
+    except:
+        return 0
 
     return total_sales
-    # print(f"Total Sales: {total_sales}")
     
 def veiwCart():
     cart = Menu(title="Products - Select product to remove")
@@ -105,7 +121,11 @@ def listProducts(hook):
             product_id = product[0]
             product_name = product[1]
             product_price = product[3]
-            products.add_option(f"{product_name} - {product_price}", hook, {"product_id": product_id, "product_name": product_name, "product_price": product_price})
+            products.add_option(
+                f"{product_name} - {product_price}", 
+                hook, 
+                {"product_id": product_id, "product_name": product_name, 
+                "product_price": product_price})
     
         products.add_option("Back", Menu.CLOSE, {})
     
@@ -116,7 +136,7 @@ def listProducts(hook):
     
     
 def addProductCart(product_id, product_name, product_price):
-    global sessionCart
+    global sessionCart 
     
     for (i, (prid, _, _, _)) in enumerate(sessionCart):
         if prid == product_id:
@@ -141,7 +161,6 @@ def checkout():
     global sessionCart
     cursor.execute("SELECT COUNT(*) FROM orders;")
     order_id = cursor.fetchall()[0][0] + 1
-
     order_date = str(datetime.datetime.today()).split(" ")[0]
     order_number = random.randrange(10000, 99999)
     
@@ -167,76 +186,137 @@ def checkout():
     
     con.commit()
     sessionCart.clear()
-    Menu.CLOSE()
-    print("Checkout Complete")
 
 def editSupplier(id, **_):
     print("Enter the following info: ")
-    sup_name = input("Company Name: ")
-    con_name = input("Contact Name: ")
-    con_title = input("Contact_title: ")
-    city = input("City: ")
-    country = input("Country: ")
-    phone = input("Phone: ")
-    email = input("Email: ")
 
     query = f'''
-    UPDATE PRODUCT 
-    SET 
-        `SupplierName` = {sup_name},
-        `ContactName` = {con_name}, 
-        `ContactTitle` = {con_title}, 
-        `City` = {city}, 
-        `Country` = {country}, 
-        `Phone` = {phone}, 
-        `EmailId` = {email}
-        WHERE Id = {id}
-        '''
+    UPDATE `supplier`
+    SET
+    '''
+
+    fields = ["SupplierName", "ContactName", "ContactTitle", "City", "Country", "Phone", "EmailId"]
+
+    for field in fields:
+        val = input(f"{field}: ")
+        if val:
+            query += f"`{field}` = {val},"
+
+    query = query[:-1] + f''' 
+    WHERE Id = {id}
+    '''
+
     cursor.execute(query)
     con.commit()
 
-def editProduct(product_id, **_):
+def editProduct(id, **_):
     print("Enter the following info: ")
-    name = input("Name: ")
-    supplier_id = input("Supplier ID: ")
-    price = input("Unit Price: ")
-    package = input("Package: ")
-    is_discontinued = input("Is Discontinued: ")
 
     query = f'''
-    UPDATE PRODUCT 
-    SET 
-        Name = '{name}',
-        SupplierId = {supplier_id},
-        UnitPrice = {price},
-        Package = '{package}',
-        IsDiscontinued = '{is_discontinued}'
-        WHERE Id = {product_id}
-        '''
+    UPDATE `product`
+    SET
+    '''
+
+    fields = ["Name", "SupplierId", "UnitPrice", "Package", "IsDiscontinued"]
+
+    for field in fields:
+        val = input(f"{field}: ")
+        if val:
+            query += f"`{field}` = {val},"
+
+    query = query[:-1] + f''' 
+    WHERE Id = {id}
+    '''
+
+    print(query)
+
     cursor.execute(query)
     con.commit()
 
-def deleteProduct(product_id, **_):
+def deleteSupplier(id, **_):
     query = f'''
-    UPDATE Product
-    SET IsDiscontinued = 1
-    WHERE ID = {product_id}
+    DELETE FROM `supplier`
+    WHERE ID = {id}
     '''
     
     cursor.execute(query)
-    cursor.commit()
+    con.commit()
 
-admin = Menu(options=[("Add supplier", addNewSupplier), ("Edit supplier", listSuppliers, {"hook": editSupplier}), ("Add product", addNewProduct), ("Discontinue product", listProducts, {"hook": deleteProduct}), ("Edit product", listProducts, {"hook": editProduct}), (f"Total Sales \t\t₹{sales()}", sales), ("Logout", Menu.CLOSE)], title="Admin Page")
-user = Menu(options=[("Browse products", listProducts, {"hook": addProductCart}), ("Veiw Cart", veiwCart), ("Logout", Menu.CLOSE)], title="Welcome!")
+def deleteProduct(id, **_):
+    query = f'''
+    DELETE FROM `product`
+    WHERE ID = {id}
+    '''
+    
+    cursor.execute(query)
+    con.commit()
+
+def getProduct(id):
+    '''
+    (ProductName, UnitPrice)
+    '''
+
+    query = f'''
+    SELECT ProductName, UnitPrice FROM `Product` 
+    WHERE Id = {id}
+    '''
+
+    cursor.execute(query)
+
+    return cursor.fetchall()[0]
+
+def displayOrder(id):
+    query = f'''
+    SELECT ProductId, Quantity FROM `orderitem` 
+    WHERE OrderId = {id}
+    '''
+
+    cursor.execute(query)
+
+    for index, orderItem in enumerate(cursor.fetchall()):
+        product = getProduct(orderItem[0])
+        print(f"\t{index+1}: {product[0]} - {product[1]} x {orderItem[1]}\n")
+
+def orderHistory():
+    print("Order Hstory\n\n")
+    
+    query = f'''
+    SELECT * FROM orders
+    WHERE CustomerId = {sessionID}
+    '''
+
+    cursor.execute(query)
+
+    for order in cursor.fetchall():
+        print(f"Order Number: {order[2]}\tDate: {order[1]}\tAmount: ₹{order[4]}\n")
+        displayOrder(order[0])
+
+    print("\n 1. Exit\n")
+
+    
+    inp = input(">>> ")
+    if inp == "1":
+        user.open()
+    else:
+        orderHistory()
+
+admin = Menu(options=[("Add supplier", addNewSupplier), ("Delete product", listSuppliers, {"hook": deleteSupplier}), ("Edit supplier", listSuppliers, {"hook": editSupplier}), ("Add product", addNewProduct), ("Delete product", listProducts, {"hook": deleteProduct}), ("Edit product", listProducts, {"hook": editProduct}), (f"Sales \t\tToday: ₹{today_sales()}\tTotal: ₹{total_sales()}", total_sales), ("Logout", Menu.CLOSE)], title="Admin Page")
+user = Menu(options=[("Browse products", listProducts, {"hook": addProductCart}), ("Veiw Cart", veiwCart), ("Order History", orderHistory), ("Logout", Menu.CLOSE)], title="Welcome!")
 
 def adminAuth():
-    _ = getpass.getpass(prompt="Enter admin password: ")
-    admin.open()
+    passw = getpass.getpass(prompt="Enter admin password: ")
+    if passw == "admin":
+        admin.open()
+    else:
+        login.open()
     
 def userAuth():
     global sessionID
-    sessionID = int(input("Enter User ID: "))
-    user.open()
+    try:
+        sessionID = int(input("Enter User ID: "))
+        user.open()
+    except:
+        login.open()
 
 login = Menu(options=[("Admin", adminAuth), ("User", userAuth), ("Exit", Menu.CLOSE)], title="Login")
 login.open()
